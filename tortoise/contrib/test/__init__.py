@@ -255,28 +255,57 @@ class IsolatedTestCase(SimpleTestCase):
     """
     An asyncio capable test class that will ensure that an isolated test db
     is available for each test.
-
-    Use this if your test needs perfect isolation.
-
-    Note to use ``{}`` as a string-replacement parameter, for your DB_URL.
-    That will create a randomised database name.
-
-    It will create and destroy a new DB instance for every test.
-    This is obviously slow, but guarantees a fresh DB.
-
-    If you define a ``tortoise_test_modules`` list, it overrides the DB setup module for the tests.
     """
-
     tortoise_test_modules: Iterable[str | ModuleType] = []
 
     async def _setUpDB(self) -> None:
         await super()._setUpDB()
         config = getDBConfig(app_label="models", modules=self.tortoise_test_modules or _MODULES)
-        await Tortoise.init(config, _create_db=True)
+
+        # 1. Initialize the connection without generating schemas.
+        #    This is the key change to prevent schemas from running too early.
+        await Tortoise.init(config=config, _create_db=True)
+
+        # 2. Add a hook here for subclasses to run their extension commands.
+        # This is where your code would run a CREATE EXTENSION command.
+        connection = connections.get("models")
+
+        # Check the dialect of the current connection
+        #if connection.dialect == "postgres":
+        await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
+
+        # 3. Now, generate the schemas.
         await Tortoise.generate_schemas(safe=False)
 
     async def _tearDownDB(self) -> None:
         await Tortoise._drop_databases()
+
+# class IsolatedTestCase(SimpleTestCase):
+#     """
+#     An asyncio capable test class that will ensure that an isolated test db
+#     is available for each test.
+
+#     Use this if your test needs perfect isolation.
+
+#     Note to use ``{}`` as a string-replacement parameter, for your DB_URL.
+#     That will create a randomised database name.
+
+#     It will create and destroy a new DB instance for every test.
+#     This is obviously slow, but guarantees a fresh DB.
+
+#     If you define a ``tortoise_test_modules`` list, it overrides the DB setup module for the tests.
+#     """
+
+#     tortoise_test_modules: Iterable[str | ModuleType] = []
+
+#     async def _setUpDB(self) -> None:
+#         await super()._setUpDB()
+#         config = getDBConfig(app_label="models", modules=self.tortoise_test_modules or _MODULES)
+#         await Tortoise.init(config, _create_db=True)
+#         await Tortoise.generate_schemas(safe=False)
+
+#     async def _tearDownDB(self) -> None:
+#         await Tortoise._drop_databases()
 
 
 class TruncationTestCase(SimpleTestCase):
