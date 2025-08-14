@@ -270,10 +270,6 @@ class IsolatedTestCase(SimpleTestCase):
         # This is where your code would run a CREATE EXTENSION command.
         connection = connections.get("models")
 
-        # Check the dialect of the current connection
-        #if connection.dialect == "postgres":
-        await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
-
         # 3. Now, generate the schemas.
         await Tortoise.generate_schemas(safe=False)
 

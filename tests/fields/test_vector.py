@@ -31,10 +31,13 @@ class VectorTestCase(test.SimpleTestCase):
         db_dialect = config['connections'][connection_alias]['engine']
 
         if "asyncpg" in db_dialect or "psycopg" in db_dialect:
-            #await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
+            try:
+                await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
+            except OperationalError:
+                raise SkipTest("pgvector extension not installed.")
             await Tortoise.generate_schemas(safe=False)
         else:
-            test.SkipTest("Not postgres.")
+            raise test.SkipTest("Not a PostgreSQL dialect.")
 
     async def _tearDownDB(self) -> None:
         await Tortoise._drop_databases()
