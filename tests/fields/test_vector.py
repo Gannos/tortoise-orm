@@ -34,7 +34,7 @@ class VectorTestCase(test.SimpleTestCase):
             try:
                 await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
             except OperationalError:
-                raise SkipTest("pgvector extension not installed.")
+                raise test.SkipTest("pgvector extension not installed.")
             await Tortoise.generate_schemas(safe=False)
         else:
             raise test.SkipTest("Not a PostgreSQL dialect.")
