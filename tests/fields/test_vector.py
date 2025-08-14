@@ -14,7 +14,7 @@ from typing import List, Iterable
 import random
 
 
-# ================== TESTCASE ============================
+# ================== TESTCASE ==============================
 from types import ModuleType
 from tortoise import Tortoise, connections
 
@@ -40,7 +40,7 @@ class VectorTestCase(test.SimpleTestCase):
         await Tortoise._drop_databases()
 
 
-# ================== VECTOR ============================
+# ================== VECTOR TEST CASES =====================
 
 def create_random_vector(dimensions: int) -> List[float]:
     if dimensions <= 0:
