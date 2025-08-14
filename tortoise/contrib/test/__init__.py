@@ -250,7 +250,6 @@ class SimpleTestCase(unittest.IsolatedAsyncioTestCase):
         else:
             super().assertListEqual(sorted(list1), sorted(list2), msg=msg)
 
-
 class IsolatedTestCase(SimpleTestCase):
     """
     An asyncio capable test class that will ensure that an isolated test db
