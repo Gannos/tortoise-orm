@@ -31,7 +31,7 @@ class VectorTestCase(test.SimpleTestCase):
         db_dialect = config['connections'][connection_alias]['engine']
 
         if "asyncpg" in db_dialect or "psycopg" in db_dialect:
-            await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
+            #await connection.execute_script("CREATE EXTENSION IF NOT EXISTS vector;")
             await Tortoise.generate_schemas(safe=False)
         else:
             test.SkipTest("Not postgres.")
