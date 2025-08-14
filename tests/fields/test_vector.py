@@ -105,6 +105,15 @@ class TestVectorField(VectorTestCase):
         self.assertIsNone(obj1.embedding_3)
         self.assertEqual(obj1.embedding_3, obj2.embedding_3)
 
+    async def test_vector_invalid_search_type(self):
+        vector1 = [1.0, 2.0, 3.0]
+        with self.assertRaises(KeyError):
+            await testmodels.VectorFields.all().order_by_similarity(
+                query_vector=vector1,
+                search_type='BOGUS_KEY',
+                vector_field_name="embedding_3"
+            )
+
     async def test_vector_search_types(self):
         vector1 = [0.000001, 0.000002, 0.000003]
         vector2 = [0.000123, 0.000456, 0.000789]
@@ -147,3 +156,38 @@ class TestVectorField(VectorTestCase):
         order = [1, 4, 3]
         results_order = [i.id for i in results]
         self.assertListEqual(order, results_order)
+
+    async def test_vector_edge_cases(self):
+        zero_vector = [0.0, 0.0, 0.0]
+        await testmodels.VectorFields.create(embedding_3=zero_vector)
+
+        large_vector = [10000.0, 20000.0, 30000.0]
+        await testmodels.VectorFields.create(embedding_3=large_vector)
+
+        negative_vector = [-1.0, -2.0, -3.0]
+        await testmodels.VectorFields.create(embedding_3=negative_vector)
+
+        obj_zero = await testmodels.VectorFields.get(embedding_3=zero_vector)
+        self.assertEqual(obj_zero.embedding_3, zero_vector)
+
+        results = await testmodels.VectorFields.all().order_by_similarity(
+            query_vector=large_vector,
+            search_type='L2_DISTANCE',
+            vector_field_name="embedding_3"
+        ).limit(1)
+
+        self.assertEqual(results[0].embedding_3, large_vector)
+
+    async def test_vector_search_with_null_data(self):
+        await testmodels.VectorFields.create(embedding_3=None)
+        await testmodels.VectorFields.create(embedding_3=[1.0, 2.0, 3.0])
+
+        results = await testmodels.VectorFields.all().order_by_similarity(
+            query_vector=[1.0, 2.0, 3.0],
+            search_type='L2_DISTANCE',
+            vector_field_name="embedding_3"
+        ).limit(1)
+
+        self.assertIsNotNone(results)
+        self.assertEqual(len(results), 1)
+        self.assertListEqual(results[0].embedding_3, [1.0, 2.0, 3.0])
